@@ -124,7 +124,7 @@ describe("convert2Compact", () => {
 });
 
 describe("resolvePaths", () => {
-    test("should resolve file paths when non-glob sources are used", async () => {
+    test("should resolve file paths when non-glob sources are used", () => {
         const src1 = path.resolve(
             __dirname,
             "../fixtures/utilsTest/subfolder-1"
@@ -134,7 +134,7 @@ describe("resolvePaths", () => {
             "../fixtures/utilsTest/subfolder-2"
         );
 
-        const paths = await resolvePaths([src1, src2]);
+        const paths = resolvePaths([src1, src2]);
         expect(paths.sort()).toEqual([
             path.resolve(__dirname, "../fixtures/utilsTest/subfolder-1/a.ts"),
             path.resolve(__dirname, "../fixtures/utilsTest/subfolder-1/b.js"),
@@ -143,7 +143,7 @@ describe("resolvePaths", () => {
         ]);
     });
 
-    test("should resolve file paths when non-glob sources and ignores are used", async () => {
+    test("should resolve file paths when non-glob sources and ignores are used", () => {
         const src1 = path.resolve(
             __dirname,
             "../fixtures/utilsTest/subfolder-1"
@@ -154,14 +154,14 @@ describe("resolvePaths", () => {
         );
         const ignore1 = src1;
 
-        const paths = await resolvePaths([src1, src2], [ignore1]);
+        const paths = resolvePaths([src1, src2], [ignore1]);
         expect(paths.sort()).toEqual([
             path.resolve(__dirname, "../fixtures/utilsTest/subfolder-2/a.ts"),
             path.resolve(__dirname, "../fixtures/utilsTest/subfolder-2/b.js")
         ]);
     });
 
-    test("should resolve file paths when glob sources are used", async () => {
+    test("should resolve file paths when glob sources are used", () => {
         const src1 = path.resolve(
             __dirname,
             "../fixtures/utilsTest/subfolder-1/**"
@@ -171,7 +171,7 @@ describe("resolvePaths", () => {
             "../fixtures/utilsTest/subfolder-2/**"
         );
 
-        const paths = await resolvePaths([src1, src2]);
+        const paths = resolvePaths([src1, src2]);
         expect(paths.sort()).toEqual([
             path.resolve(__dirname, "../fixtures/utilsTest/subfolder-1/a.ts"),
             path.resolve(__dirname, "../fixtures/utilsTest/subfolder-1/b.js"),
@@ -180,7 +180,7 @@ describe("resolvePaths", () => {
         ]);
     });
 
-    test("should resolve file paths when glob sources and ignores are used", async () => {
+    test("should resolve file paths when glob sources and ignores are used", () => {
         const src1 = path.resolve(
             __dirname,
             "../fixtures/utilsTest/subfolder-1/**"
@@ -191,13 +191,13 @@ describe("resolvePaths", () => {
             "../fixtures/utilsTest/**/*.ts"
         );
 
-        const paths = await resolvePaths([src1], [ignore1]);
+        const paths = resolvePaths([src1], [ignore1]);
         expect(paths.sort()).toEqual([
             path.resolve(__dirname, "../fixtures/utilsTest/subfolder-1/b.js")
         ]);
     });
 
-    test("should resolve file paths when mixin regular and glob paths in source and ignores", async () => {
+    test("should resolve file paths when mixin regular and glob paths in source and ignores", () => {
         const srcGlob1 = path.resolve(__dirname, "../fixtures/utilsTest/**"); // glob
         const srcGlob2 = path.resolve(
             __dirname,
@@ -217,7 +217,7 @@ describe("resolvePaths", () => {
             "../fixtures/utilsTest/**/*.js" // glob
         );
 
-        const paths = await resolvePaths(
+        const paths = resolvePaths(
             [srcGlob1, srcGlob2, srcRegular],
             [ignoreRegular, ignoreGlob]
         );

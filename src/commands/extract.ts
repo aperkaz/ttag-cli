@@ -1,13 +1,13 @@
 import * as ora from "ora";
 import * as fs from "fs";
-import { glob } from "glob";
 import * as c3poTypes from "../types";
 import { extractAll } from "../lib/extract";
+import { resolvePaths } from "../lib/utils";
 
 async function extract(
     output: string,
     src: string[],
-    ignore: string[],
+    ignore: string[] | undefined,
     lang: string = "en",
     ttagOverrideOpts?: c3poTypes.TtagOpts,
     ttagRcOpts?: c3poTypes.TtagRc
@@ -17,20 +17,9 @@ async function extract(
     );
     progress.start();
 
-    const paths = await glob(src, {
-        absolute: true,
-        ignore
-    });
-
-    // console.log("🔥 script execution location: ", process.cwd());
-    // console.log(`🔥 ignoredPath: `, ignoredPaths);
-    // console.log("🔥 paths");
-    // console.log(paths);
-    // console.log("🔥 sanitized paths");
-    // console.log(sanitizedPaths);
-
     const result = await extractAll(
-        paths,
+        // TODONOW: add test
+        await resolvePaths(src, ignore),
         lang,
         progress,
         ttagOverrideOpts,

@@ -1,33 +1,29 @@
 import * as ora from "ora";
 import * as ttagTypes from "../types";
 import * as fs from "fs";
-import { glob } from "glob";
 import { extractAll } from "../lib/extract";
 import { updatePo } from "../lib/update";
 import { parse } from "../lib/parser";
 import { serialize, SerializeOptions } from "../lib/serializer";
 import { checkDuplicateKeys } from "../lib/checkDuplicateKeys";
+import { resolvePaths } from "../lib/utils";
 
 async function update(
     pofile: string,
     src: string[],
-    ignore: string[],
+    ignore: string[] | undefined,
     lang: string,
     ttagOverrideOpts?: ttagTypes.TtagOpts,
     ttagRcOpts?: ttagTypes.TtagRc,
     serializeOpts?: SerializeOptions
 ) {
-    const paths = await glob(src, {
-        absolute: true,
-        ignore
-    });
-
     const progress: ttagTypes.Progress = ora(`[ttag] updating ${pofile} ...`);
     progress.start();
     try {
         const pot = parse(
             await extractAll(
-                paths,
+                // TODONOW: add test
+                await resolvePaths(src, ignore),
                 lang,
                 progress,
                 ttagOverrideOpts,

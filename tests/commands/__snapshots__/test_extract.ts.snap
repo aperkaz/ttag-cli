@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
 exports[`extract base case 1`] = `
 "msgid \\"\\"
@@ -15,6 +15,19 @@ msgstr \\"\\"
 #, javascript-format
 msgid \\"test translation 2 \${ name }\\"
 msgstr \\"\\"
+"
+`;
+
+exports[`extract from glob source with filter 1`] = `
+"msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=utf-8\\n"
+"Plural-Forms: nplurals=2; plural=(n!=1);\\n"
+
+#: tests/fixtures/baseTest/nested/test2.js:4
+#, javascript-format
+msgid "test translation 2 \${ name }"
+msgstr ""
 "
 `;
 

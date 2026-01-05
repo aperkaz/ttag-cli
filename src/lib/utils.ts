@@ -1,7 +1,7 @@
 import { Translations, Message, PoData, PoDataCompact } from "./parser";
 import generate from "@babel/generator";
 import { Node } from "@babel/types";
-import { glob } from "glob";
+import { globSync } from "glob";
 
 const pluralNumRegex = /^nplurals ?= ?(\d);/;
 
@@ -76,10 +76,11 @@ export function convert2Compact(poData: PoData): PoDataCompact {
  * Helper function that calculates all the file paths from a src array.
  * Both the src and ingnore arrays can be globs, but dont need to.
  */
-export async function resolvePaths(
+export function resolvePaths(
     src: string[],
-    ignore?: string[]
-): Promise<string[]> {
+    /** Ignore could be a string or an array of strings, depending on how many paths are ignored */
+    ignore?: string | string[]
+): string[] {
     const isGlobPattern = (str: string): boolean =>
         /[*?]|\[.*\]|\{.*\}|@\(|\)|\+|\!|\*\(|\?\(/.test(str);
 
@@ -90,16 +91,17 @@ export async function resolvePaths(
     const srcGlob = src.map(path =>
         isGlobPattern(path) ? path : toGlobPath(path)
     );
-    const ignoreGlob = ignore?.map(path =>
-        isGlobPattern(path) ? path : toGlobPath(path)
-    );
 
-    console.log("srcGlob");
-    console.log(srcGlob);
-    console.log("ignoreGlob");
-    console.log(ignoreGlob);
+    const ignoreGlob =
+        typeof ignore === "string"
+            ? [ignore].map(path =>
+                  isGlobPattern(path) ? path : toGlobPath(path)
+              )
+            : ignore?.map(path =>
+                  isGlobPattern(path) ? path : toGlobPath(path)
+              );
 
-    return await glob(srcGlob, {
+    return globSync(srcGlob, {
         absolute: true,
         ignore: ignoreGlob,
         nodir: true
