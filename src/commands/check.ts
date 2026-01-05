@@ -4,6 +4,7 @@ Compare designated pofile with pot file extracted from all files in all paths
 
 import * as ora from "ora";
 import * as fs from "fs";
+import { glob } from "glob";
 import { extractAll } from "../lib/extract";
 import { checkDuplicateKeys } from "../lib/checkDuplicateKeys";
 import * as c3poTypes from "../types";
@@ -61,12 +62,17 @@ Check all keys from pots(keys only files) are present in pofile(files with trans
 */
 async function check(
     pofile: string,
-    paths: string[],
+    src: string[],
+    ignore: string[],
     lang: string,
     overrideOpts?: c3poTypes.TtagOpts,
     ttagRcOpts?: c3poTypes.TtagRc,
     skip?: "translation"
 ) {
+    const paths = await glob(src, {
+        absolute: true,
+        ignore
+    });
     const progress: c3poTypes.Progress = ora(
         `[ttag] checking translations from ${paths} ...`
     );
