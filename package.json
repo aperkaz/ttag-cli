@@ -8,6 +8,9 @@
   },
   "author": "",
   "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "preversion": "npm run build && npm test",
     "test": "mkdir -p dist && CI=true jest",

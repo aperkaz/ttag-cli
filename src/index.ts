@@ -1,20 +1,5 @@
 import * as yargs from "yargs";
 import { Options } from "yargs";
-import extract from "./commands/extract";
-import check from "./commands/check";
-import merge from "./commands/merge";
-import init from "./commands/init";
-import update from "./commands/update";
-import translate from "./commands/translate";
-import filter from "./commands/filter";
-import stats from "./commands/stats";
-import replace from "./commands/replace";
-import color from "./commands/color";
-import pseudo from "./commands/pseudo";
-import spell from "./commands/spell";
-import validate from "./commands/validate";
-import web from "./commands/web";
-import po2js from "./commands/po2json";
 import {
     getTtagOptsForYargs,
     parseTtagPluginOpts
@@ -96,6 +81,7 @@ yargs
             ...getTtagOptsForYargs()
         },
         (argv: any) => {
+            const extract = require("./commands/extract").default;
             extract(
                 argv.output,
                 argv.src,
@@ -132,6 +118,7 @@ yargs
             ...getTtagOptsForYargs()
         },
         (argv: any) => {
+            const check = require("./commands/check").default;
             check(
                 argv.pofile,
                 argv.src,
@@ -148,6 +135,7 @@ yargs
         "will merge two or more po(t) files together using first non-empty msgstr and header from left-most file",
         {},
         (argv: any) => {
+            const merge = require("./commands/merge").default;
             merge(argv.path);
         }
     )
@@ -162,6 +150,7 @@ yargs
             }
         },
         (argv: any) => {
+            const translate = require("./commands/translate").default;
             translate(argv.path, argv.output);
         }
     )
@@ -170,6 +159,7 @@ yargs
         "will display various pofile statistics(encoding, plurals, translated, fuzzyness)",
         {},
         (argv: any) => {
+            const stats = require("./commands/stats").default;
             stats(argv.path);
         }
     )
@@ -208,6 +198,7 @@ yargs
             }
         },
         (argv: any) => {
+            const filter = require("./commands/filter").default;
             filter(
                 argv.path,
                 argv.fuzzy,
@@ -231,6 +222,7 @@ yargs
             }
         },
         (argv: any) => {
+            const init = require("./commands/init").default;
             init(argv.lang, argv.filename);
         }
     )
@@ -261,6 +253,7 @@ yargs
             }
         },
         (argv: any) => {
+            const update = require("./commands/update").default;
             update(
                 argv.pofile,
                 argv.src,
@@ -279,6 +272,7 @@ yargs
         "will replace all strings with translations from the .po file",
         { ...getTtagOptsForYargs() },
         (argv: any) => {
+            const replace = require("./commands/replace").default;
             replace(
                 argv.pofile,
                 argv.out,
@@ -292,6 +286,7 @@ yargs
         "will output po(t)file with pretty colors on, combine with | less -r",
         {},
         (argv: any) => {
+            const color = require("./commands/color").default;
             color(argv.pofile);
         }
     )
@@ -306,6 +301,7 @@ yargs
             }
         },
         (argv: any) => {
+            const pseudo = require("./commands/pseudo").default;
             pseudo(argv.path, argv.output);
         }
     )
@@ -314,6 +310,7 @@ yargs
         "will spellcheck po file messages with given locale, locale can be autodetected from pofile",
         {},
         (argv: any) => {
+            const spell = require("./commands/spell").default;
             spell(argv.pofile, argv.locale);
         }
     )
@@ -322,6 +319,7 @@ yargs
         "will validate js template strings (`${x}`) in messages and translations and against each other",
         {},
         (argv: any) => {
+            const validate = require("./commands/validate").default;
             validate(argv.pofile);
         }
     )
@@ -330,6 +328,7 @@ yargs
         "will open pofile in web editor",
         {},
         (argv: any) => {
+            const web = require("./commands/web").default;
             web(argv.pofile);
         }
     )
@@ -357,6 +356,7 @@ yargs
             }
         },
         (argv: any) => {
+            const po2js = require("./commands/po2json").default;
             po2js(argv.pofile, argv.pretty, argv.nostrip, argv.format);
         }
     )

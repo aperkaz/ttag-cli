@@ -32,6 +32,11 @@ const tsCoalescing = path.resolve(
     "../fixtures/tsNullishCoalescing.ts"
 );
 const tsxPath = path.resolve(__dirname, "../fixtures/tSXParse.tsx");
+const syntaxPath = path.resolve(__dirname, "../fixtures/extractSyntax.js");
+const importEqualsPath = path.resolve(
+    __dirname,
+    "../fixtures/extractImportEquals.ts"
+);
 
 function cleanup() {
     fs.unlinkSync(potPath);
@@ -51,6 +56,18 @@ test("extract from jsx", () => {
     execSync(`ts-node src/index.ts extract -o ${potPath} ${jsxPath}`);
     const result = fs.readFileSync(potPath).toString();
     expect(result).toMatchSnapshot();
+});
+
+test("extract from modern JavaScript with Flow, JSX, and decorators", () => {
+    execSync(`ts-node src/index.ts extract -o ${potPath} ${syntaxPath}`);
+    const result = fs.readFileSync(potPath).toString();
+    expect(result).toContain('msgid "hello ${ name }"');
+});
+
+test("extract from TypeScript import equals syntax", () => {
+    execSync(`ts-node src/index.ts extract -o ${potPath} ${importEqualsPath}`);
+    const result = fs.readFileSync(potPath).toString();
+    expect(result).toContain('msgid "path separator ${ path.sep }"');
 });
 
 test("extract with decorator", () => {

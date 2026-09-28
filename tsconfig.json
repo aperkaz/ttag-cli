@@ -1,8 +1,10 @@
 {
     "compilerOptions": {
-        "target": "es5",
+        "target": "es2022",
+        "module": "commonjs",
+        "moduleResolution": "node",
         "outDir": "dist",
-        "lib":["es5", "es6", "es2017", "dom"],
+        "lib":["es2023", "dom"],
         "strictNullChecks": true,
         "noImplicitAny": true,
         "noImplicitReturns": true,

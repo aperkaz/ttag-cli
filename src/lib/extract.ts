@@ -3,11 +3,8 @@ import * as babel from "@babel/core";
 import * as fs from "fs";
 import * as tmp from "tmp";
 import { extname } from "path";
-import { parseComponent } from "vue-sfc-parser";
-import { walk } from "estree-walker";
-import { parse as parseSvelte } from "svelte/compiler";
 import ignore from "ignore";
-import { makeBabelConf } from "../defaults";
+import { makeExtractBabelConf } from "../defaults";
 import * as ttagTypes from "../types";
 import { TransformFn, pathsWalk } from "./pathsWalk";
 import { mergeOpts } from "./ttagPluginOverride";
@@ -33,13 +30,19 @@ export async function extractAll(
     if (overrideOpts) {
         ttagOpts = mergeOpts(ttagOpts, overrideOpts);
     }
-    const babelOptions = makeBabelConf(ttagOpts, {
-        useProjectBabelrc: overrideOpts && overrideOpts.useProjectBabelrc
-    });
+    const getBabelOptions = (filename: string) =>
+        makeExtractBabelConf(
+            ttagOpts,
+            {
+                useProjectBabelrc: overrideOpts && overrideOpts.useProjectBabelrc
+            },
+            filename
+        );
     const transformFn: TransformFn = filepath => {
         try {
             switch (extname(filepath)) {
                 case ".vue": {
+                    const { parseComponent } = require("vue-sfc-parser");
                     const source = fs.readFileSync(filepath).toString();
                     const script = parseComponent(source).script;
                     if (script) {
@@ -50,13 +53,15 @@ export async function extractAll(
                             "\n".repeat(lineCount) + script.content,
                             {
                                 filename: filepath,
-                                ...babelOptions
+                                ...getBabelOptions(filepath)
                             }
                         );
                     }
                     break;
                 }
                 case ".svelte": {
+                    const { walk } = require("estree-walker");
+                    const { parse: parseSvelte } = require("svelte/compiler");
                     const source = fs.readFileSync(filepath).toString();
                     const jsCodes: string[] = [];
                     const { html, instance, module } = parseSvelte(source);
@@ -104,12 +109,12 @@ export async function extractAll(
 
                     babel.transformSync(jsCodes.join("\n"), {
                         filename: filepath,
-                        ...babelOptions
+                        ...getBabelOptions(filepath)
                     });
                     break;
                 }
                 default:
-                    babel.transformFileSync(filepath, babelOptions);
+                    babel.transformFileSync(filepath, getBabelOptions(filepath));
             }
         } catch (err) {
             const error = err as any;
