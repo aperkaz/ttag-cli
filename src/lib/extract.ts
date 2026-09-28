@@ -33,9 +33,8 @@ export async function extractData(
     if (lang !== "en") ttagOpts.defaultLang = lang;
     if (overrideOpts) ttagOpts = mergeOpts(ttagOpts, overrideOpts);
 
-    const sourceFiles = filterIgnoredFiles(
-        rcOpts?.extractor?.paths || paths,
-        rcOpts
+    const sourceFiles = Array.from(
+        new Set(filterIgnoredFiles(rcOpts?.extractor?.paths || paths, rcOpts))
     );
     const sources = new Map<string, string>();
     if (canUseOxc(sourceFiles, overrideOpts)) {
