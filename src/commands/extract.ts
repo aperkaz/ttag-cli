@@ -2,7 +2,7 @@ import * as ora from "ora";
 import * as fs from "fs";
 import * as c3poTypes from "../types";
 import { extractAll } from "../lib/extract";
-import { resolvePaths } from "../lib/utils";
+import { resolvePaths } from "../lib/paths";
 
 async function extract(
     output: string,

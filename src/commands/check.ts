@@ -8,7 +8,7 @@ import { extractAll } from "../lib/extract";
 import { checkDuplicateKeys } from "../lib/checkDuplicateKeys";
 import * as c3poTypes from "../types";
 import { parse, PoData } from "../lib/parser";
-import { resolvePaths } from "../lib/utils";
+import { resolvePaths } from "../lib/paths";
 
 /*
 Run any string in stream through warning first

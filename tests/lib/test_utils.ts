@@ -1,4 +1,5 @@
-import { convert2Compact, resolvePaths } from "../../src/lib/utils";
+import { convert2Compact } from "../../src/lib/utils";
+import { resolvePaths } from "../../src/lib/paths";
 import * as path from "path";
 
 describe("convert2Compact", () => {

@@ -6,7 +6,7 @@ import { updatePo } from "../lib/update";
 import { parse } from "../lib/parser";
 import { serialize, SerializeOptions } from "../lib/serializer";
 import { checkDuplicateKeys } from "../lib/checkDuplicateKeys";
-import { resolvePaths } from "../lib/utils";
+import { resolvePaths } from "../lib/paths";
 
 async function update(
     pofile: string,
