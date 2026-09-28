@@ -87,12 +87,10 @@ function extractFile(
     const aliases = new Map<string, string>();
     const imports = new Set<string>(opts.discover || []);
     const candidates: Node[] = [];
-    const parents = new WeakMap<Node, Node>();
     for (const [alias, api] of Object.entries(apiNames))
         aliases.set(alias, api);
 
-    walk(program, (node, parent) => {
-        if (parent) parents.set(node, parent);
+    walk(program, node => {
         if (
             node.type === "ImportDeclaration" &&
             isTtagModule(node.source.value, true)
@@ -222,7 +220,7 @@ function extractFile(
             entry.comments.flag = "javascript-format";
         }
         const extracted = opts.addComments
-            ? getExtractedComment(node, parents, comments, source)
+            ? getExtractedComment(node, comments, source)
             : undefined;
         if (extracted) {
             entry.comments = entry.comments || {};
@@ -367,23 +365,10 @@ export function compileCatalog(data: PoData): string {
 
 function getExtractedComment(
     node: Node,
-    parents: WeakMap<Node, Node>,
     comments: Node[],
     source: string
 ): string | undefined {
-    const extracted: string[] = [];
-    const seen = new Set<number>();
-    let current: Node | undefined = node;
-    while (current) {
-        const comment = precedingComment(current.start, comments, source);
-        if (comment && !seen.has(comment.start)) {
-            seen.add(comment.start);
-            extracted.unshift(comment.value.trimStart());
-        }
-        if (/Statement$|Declaration$/.test(current.type)) break;
-        current = parents.get(current);
-    }
-    return extracted.length ? extracted.join("\n") : undefined;
+    return precedingComment(node.start, comments, source)?.value.trimStart();
 }
 
 function precedingComment(
@@ -423,14 +408,10 @@ function isTtagRequire(node: Node): boolean {
     );
 }
 
-function walk(
-    node: Node,
-    visitor: (node: Node, parent?: Node) => void,
-    parent?: Node
-): void {
+function walk(node: Node, visitor: (node: Node) => void): void {
     if (!node || typeof node !== "object" || typeof node.type !== "string")
         return;
-    visitor(node, parent);
+    visitor(node);
     for (const key of Object.keys(node)) {
         if (
             key === "type" ||
@@ -441,9 +422,9 @@ function walk(
             continue;
         const value = node[key];
         if (Array.isArray(value)) {
-            for (const child of value) walk(child, visitor, node);
+            for (const child of value) walk(child, visitor);
         } else {
-            walk(value, visitor, node);
+            walk(value, visitor);
         }
     }
 }

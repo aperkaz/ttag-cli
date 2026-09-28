@@ -23,7 +23,10 @@ function updateMessages(
                 poMessages[msgid],
                 potMessages[msgid]
             );
-            updated[msgid].comments = potMessages[msgid].comments;
+            updated[msgid].comments = {
+                ...poMessages[msgid].comments,
+                ...potMessages[msgid].comments
+            };
         }
     }
     return updated;

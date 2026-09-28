@@ -57,7 +57,8 @@ test("updatePo. Should update existing", () => {
                 test: {
                     msgid: "test",
                     comments: {
-                        reference: "path.js:1"
+                        reference: "path.js:1",
+                        extracted: "translator note"
                     },
                     msgstr: ["test trans"]
                 }
@@ -70,7 +71,8 @@ test("updatePo. Should update existing", () => {
     expect(resultPo.translations[""]).toHaveProperty("test");
     expect(resultPo.translations[""]["test"].msgstr).toEqual(["test trans"]);
     expect(resultPo.translations[""]["test"].comments).toEqual({
-        reference: "path.js:2"
+        reference: "path.js:2",
+        extracted: "translator note"
     });
 });
 

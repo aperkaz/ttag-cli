@@ -4,7 +4,6 @@ const { jt: jsxTranslate } = require("ttag");
 translate`aliased ${user.name}`;
 get("function message");
 
-// parent declaration comment
 const multiline = translate`
     first line
     second line
