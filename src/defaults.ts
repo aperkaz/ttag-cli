@@ -13,23 +13,32 @@ import * as babelPluginDecorators from "@babel/plugin-proposal-decorators";
 
 export const defaultPlugins: ConfigItem[] = [
     [babelPluginDecorators, { version: "2023-11" }],
-    exportDefaultFromPlugin,
+    exportDefaultFromPlugin
 ];
 
 export const defaultPresets: ConfigItem[] = [
     presetFlow,
-    [require("@babel/preset-env"), { modules: "commonjs", targets: "current node" }],
+    [
+        require("@babel/preset-env"),
+        { modules: "commonjs", targets: "current node" }
+    ],
     presetReact,
-    [presetTS, { allowDeclareFields: true }],
+    [presetTS, { allowDeclareFields: true }]
 ];
 
-export function makeBabelConf(ttagOpts: ttagTypes.TtagOpts, cliOpts: ttagTypes.CliOpts ): TransformOptions {
+export function makeBabelConf(
+    ttagOpts: ttagTypes.TtagOpts,
+    cliOpts: ttagTypes.CliOpts
+): TransformOptions {
     return {
         babelrc: Boolean(cliOpts.useProjectBabelrc),
         configFile: Boolean(cliOpts.useProjectBabelrc) ? undefined : false,
         presets: [
             presetFlow,
-            [require("@babel/preset-env"), { loose: true, targets: "node 6.5" }],
+            [
+                require("@babel/preset-env"),
+                { loose: true, targets: "node 6.5" }
+            ],
             presetReact,
             [presetTS, { allowDeclareFields: true }]
         ],
@@ -44,11 +53,11 @@ export function makeExtractBabelConf(
     finalize: boolean = false
 ): TransformOptions {
     const isTypeScript = /\.tsx?$/.test(filename);
-    const parserPlugins: NonNullable<
-        NonNullable<TransformOptions["parserOpts"]>["plugins"]
-    > = [
+    const parserPlugins: NonNullable<NonNullable<
+        TransformOptions["parserOpts"]
+    >["plugins"]> = [
         isTypeScript ? "typescript" : "flow",
-        ...(filename.endsWith(".ts") ? [] : ["jsx"] as const),
+        ...(filename.endsWith(".ts") ? [] : (["jsx"] as const)),
         ["decorators", { decoratorsBeforeExport: false }],
         "decoratorAutoAccessors",
         "exportDefaultFrom"

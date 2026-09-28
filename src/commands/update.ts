@@ -1,4 +1,4 @@
-import * as ora from "ora";
+import progress from "../lib/progress";
 import * as ttagTypes from "../types";
 import * as fs from "fs";
 import { extractAll } from "../lib/extract";
@@ -19,14 +19,16 @@ async function update(
 ) {
     const paths = resolvePaths(src, ignore);
 
-    const progress: ttagTypes.Progress = ora(`[ttag] updating ${pofile} ...`);
-    progress.start();
+    const progressState: ttagTypes.Progress = progress(
+        `[ttag] updating ${pofile} ...`
+    );
+    progressState.start();
     try {
         const pot = parse(
             await extractAll(
                 paths,
                 lang,
-                progress,
+                progressState,
                 ttagOverrideOpts,
                 ttagRcOpts
             )
@@ -34,15 +36,15 @@ async function update(
         const errMessage = checkDuplicateKeys(pot);
 
         if (errMessage) {
-            progress.fail(errMessage);
+            progressState.fail(errMessage);
             process.exit(1);
         }
         const po = parse(fs.readFileSync(pofile).toString());
         const resultPo = updatePo(pot, po);
         fs.writeFileSync(pofile, serialize(resultPo, serializeOpts));
-        progress.succeed(`${pofile} updated`);
+        progressState.succeed(`${pofile} updated`);
     } catch (err) {
-        progress.fail(`Failed to update. ${err.message}. ${err.stack}`);
+        progressState.fail(`Failed to update. ${err.message}. ${err.stack}`);
         process.exit(1);
     }
 }

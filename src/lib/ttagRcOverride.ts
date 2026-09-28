@@ -11,8 +11,7 @@ type RC_TMPL = {
 function readTtagRC(): TtagRc {
     const opts: any = {};
     try {
-        if (!fs.existsSync(".ttagrc"))
-            return <TtagRc>opts;
+        if (!fs.existsSync(".ttagrc")) return <TtagRc>opts;
         const jsonRaw = fs.readFileSync(".ttagrc", "utf8");
         const parsedJSON = <RC_TMPL>JSON.parse(jsonRaw);
         if ("extractor" in parsedJSON) {

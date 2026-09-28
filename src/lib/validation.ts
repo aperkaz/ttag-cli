@@ -12,9 +12,7 @@ const isoCodes =
     "http://docs.translatehouse.org/projects/localization-guide/en/latest/l10n/pluralforms.html";
 
 export function langValidationMsg(language: string): string {
-    return `Unknown lang code "${
-        language
-    }".\nSee all available lang codes here - ${isoCodes}`;
+    return `Unknown lang code "${language}".\nSee all available lang codes here - ${isoCodes}`;
 }
 
 /* Parse template string with babel and return a Set of template identifiers and tagged expressions */

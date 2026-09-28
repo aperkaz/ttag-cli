@@ -2,7 +2,7 @@ import "../declarations";
 import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
-import * as serialize from "serialize-javascript";
+import { deserialize, serialize } from "v8";
 
 import * as Spellchecker from "hunspell-spellchecker";
 
@@ -37,7 +37,7 @@ function saveDict(dictName: string, dict: Object) {
 
 /* Load dict from file and eval it to create all objects */
 function loadDict(dictName: string) {
-    return eval(`(${fs.readFileSync(dictName).toString()})`);
+    return deserialize(fs.readFileSync(dictName));
 }
 
 /* Load dict file either from web or from disc and save it */

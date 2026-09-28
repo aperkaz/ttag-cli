@@ -1,4 +1,4 @@
-import * as ora from "ora";
+import progressState from "../lib/progress";
 import * as fs from "fs";
 import * as c3poTypes from "../types";
 import { getPluralFormsHeader, hasLang } from "plural-forms";
@@ -17,7 +17,7 @@ msgstr ""
 }
 
 export default function init(language: string, pofile: string) {
-    const progress: c3poTypes.Progress = ora();
+    const progress: c3poTypes.Progress = progressState();
     if (!hasLang(language)) {
         progress.fail(langValidationMsg(language));
         process.exit(1);

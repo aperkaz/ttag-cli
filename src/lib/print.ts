@@ -1,10 +1,10 @@
-import chalk from "chalk";
+import { blue, yellow } from "./style";
 import { Comments, Message, Headers } from "./parser";
 import { generateHeader } from "gettext-parser/lib/shared";
 
 /* Print formatted header */
 export function printHeader(headers: Headers) {
-    process.stdout.write(chalk.blue(generateHeader(headers)));
+    process.stdout.write(blue(generateHeader(headers)));
 }
 
 /* Print formatted comments if exists */
@@ -16,35 +16,33 @@ export function printComments(comments: Comments | undefined) {
         return;
     }
     for (const comment of comments.reference.split("\n")) {
-        process.stdout.write(chalk.blue(`#: ${comment}\n`));
+        process.stdout.write(blue(`#: ${comment}\n`));
     }
     if (comments.flag === "fuzzy") {
-        process.stdout.write(chalk.blue("#, fuzzy\n"));
+        process.stdout.write(blue("#, fuzzy\n"));
     }
 }
 
 /* Print formatted context if exists */
 export function printContext(ctxt: string) {
     if (ctxt != "") {
-        process.stdout.write(`${chalk.yellow("msgctxt")} "${ctxt}"\n`);
+        process.stdout.write(`${yellow("msgctxt")} "${ctxt}"\n`);
     }
 }
 
 /* Print formatted msgid */
 export function printMsgid(msgid: string) {
-    process.stdout.write(`${chalk.yellow("msgid")} "${msgid}"\n`);
+    process.stdout.write(`${yellow("msgid")} "${msgid}"\n`);
 }
 
 /* Print formatted msgstr */
 export function printMsgstr(msgstr: string[]) {
     if (msgstr.length > 1) {
         for (let i = 0; i < msgstr.length; i++) {
-            process.stdout.write(
-                `${chalk.yellow(`msgstr[${i}]`)} "${msgstr[i]}"\n`
-            );
+            process.stdout.write(`${yellow(`msgstr[${i}]`)} "${msgstr[i]}"\n`);
         }
     } else {
-        process.stdout.write(`${chalk.yellow("msgstr")} "${msgstr[0]}"\n`);
+        process.stdout.write(`${yellow("msgstr")} "${msgstr[0]}"\n`);
     }
 }
 
@@ -53,9 +51,7 @@ export function printMsgidPlural(msgid_plural: string | undefined) {
     if (!msgid_plural) {
         return;
     }
-    process.stdout.write(
-        `${chalk.yellow("msgid_plural:")} "${msgid_plural}"\n`
-    );
+    process.stdout.write(`${yellow("msgid_plural:")} "${msgid_plural}"\n`);
 }
 
 /* Print full message */

@@ -1,5 +1,5 @@
 import * as fs from "fs";
-import chalk from "chalk";
+import { gray, green, yellow } from "../lib/style";
 import { parse, Translations, Message } from "../lib/parser";
 
 type PoStats = {
@@ -44,27 +44,29 @@ function statsCalculator(translations: Translations): PoStats {
 export default function stats(path: string) {
     const poData = parse(fs.readFileSync(path).toString());
     const poStats = statsCalculator(poData.translations);
-    console.log(`${chalk.green("TOTAL:")} ${poStats.total}`);
-    console.log(`${chalk.green("CONTEXTS:")} ${poStats.contexts}`);
-    console.log(`${chalk.green("TRANSLATED:")} ${poStats.translated}`);
-    console.log(`${chalk.green("FUZZY:")} ${poStats.fuzzy}`);
+    console.log(`${green("TOTAL:")} ${poStats.total}`);
+    console.log(`${green("CONTEXTS:")} ${poStats.contexts}`);
+    console.log(`${green("TRANSLATED:")} ${poStats.translated}`);
+    console.log(`${green("FUZZY:")} ${poStats.fuzzy}`);
 
     let indicators = [];
     const maxLength = 50;
     const filledGreen = Math.round(
-        (poStats.translated - poStats.fuzzy) / poStats.total * maxLength
+        ((poStats.translated - poStats.fuzzy) / poStats.total) * maxLength
     );
-    const filledYellow = Math.round(poStats.fuzzy / poStats.total * maxLength);
+    const filledYellow = Math.round(
+        (poStats.fuzzy / poStats.total) * maxLength
+    );
     const fillledRed = maxLength - filledGreen - filledYellow;
 
     for (let i = 0; i < filledGreen; i++) {
-        indicators.push(chalk.green("#"));
+        indicators.push(green("#"));
     }
     for (let i = 0; i < filledYellow; i++) {
-        indicators.push(chalk.yellow("#"));
+        indicators.push(yellow("#"));
     }
     for (let i = 0; i < fillledRed; i++) {
-        indicators.push(chalk.gray("·"));
+        indicators.push(gray("·"));
     }
     const translatedPercent = poStats.translated / poStats.total;
     console.log(

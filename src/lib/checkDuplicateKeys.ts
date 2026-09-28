@@ -153,7 +153,9 @@ export function checkDuplicateKeys(poData: PoData) {
         }
     }
     if (errors.length > 0) {
-        errors.push("Consider using deferent context for one of those msgid\'s. See the context doc here - https://ttag.js.org/docs/context.html")
+        errors.push(
+            "Consider using deferent context for one of those msgid's. See the context doc here - https://ttag.js.org/docs/context.html"
+        );
         return errors.join("\n");
     }
     return null;

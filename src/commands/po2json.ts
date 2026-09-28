@@ -1,4 +1,4 @@
-import * as ora from "ora";
+import progressState from "../lib/progress";
 import * as ttagTypes from "../types";
 import { parse, PoDataCompact, PoData } from "../lib/parser";
 import { iterateTranslations, convert2Compact } from "../lib/utils";
@@ -11,7 +11,7 @@ export default function po2json(
     nostrip: boolean,
     format: "compact" | "verbose"
 ) {
-    const progress: ttagTypes.Progress = ora(
+    const progress: ttagTypes.Progress = progressState(
         `[ttag] po2json translation from ${path} ...`
     );
     let poData: PoData | PoDataCompact = parse(

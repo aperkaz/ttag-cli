@@ -1,5 +1,5 @@
 import "../declarations";
-import * as ora from "ora";
+import progressState from "../lib/progress";
 import * as c3poTypes from "../types";
 import { makeBabelConf } from "../defaults";
 import * as babel from "@babel/core";
@@ -13,7 +13,7 @@ async function replace(
     srcPath: string,
     overrideOpts?: c3poTypes.TtagOpts & c3poTypes.CliOpts
 ) {
-    const progress: c3poTypes.Progress = ora(
+    const progress: c3poTypes.Progress = progressState(
         `[ttag] replacing source files with translations ...`
     );
     progress.start();

@@ -1,14 +1,11 @@
-import chalk from "chalk";
 import * as fs from "fs";
 import { parse } from "../lib/parser";
 import { iterateTranslations } from "../lib/utils";
 import { printHeader, printMsg } from "../lib/print";
+import { setColorEnabled } from "../lib/style";
 
 export default function color(path: string) {
-    // Force color output even on tty, otherwise this command is useless
-    chalk.enabled = true;
-    chalk.level = 1;
-
+    setColorEnabled(true);
     const data = fs.readFileSync(path).toString();
     const poData = parse(data);
     printMsg({ msgid: "", msgstr: [""] });

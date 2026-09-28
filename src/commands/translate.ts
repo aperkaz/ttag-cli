@@ -1,6 +1,7 @@
 import * as fs from "fs";
-import * as readlineSync from "readline-sync";
-import chalk from "chalk";
+import { createInterface } from "readline/promises";
+import { stdin, stdout } from "process";
+import { yellow } from "../lib/style";
 import { parse, Translations, PoData } from "../lib/parser";
 import { serialize } from "../lib/serializer";
 import {
@@ -27,17 +28,26 @@ export function read(path: string): PoData {
 }
 
 /* Stream translations for each form if many(plural) */
-function* translationStream(msgstr: string[]): IterableIterator<string> {
-    if (msgstr.length > 1) {
-        for (let i = 0; i < msgstr.length; i++) {
-            yield readlineSync.question(chalk.yellow(`msgstr[${i}]: `));
+async function translationStream(msgstr: string[]): Promise<string[]> {
+    const readline = createInterface({ input: stdin, output: stdout });
+    const translations: string[] = [];
+    try {
+        if (msgstr.length > 1) {
+            for (let i = 0; i < msgstr.length; i++) {
+                translations.push(
+                    await readline.question(yellow(`msgstr[${i}]: `))
+                );
+            }
+        } else {
+            translations.push(await readline.question(yellow(`msgstr: `)));
         }
-    } else {
-        yield readlineSync.question(chalk.yellow(`msgstr: `));
+    } finally {
+        readline.close();
     }
+    return translations;
 }
 
-export default function translate(path: string, output: string) {
+export default async function translate(path: string, output: string) {
     const poData = read(path);
     const stream = untranslatedStream(poData.translations);
     // skip first message(empty msgid in header)
@@ -49,7 +59,7 @@ export default function translate(path: string, output: string) {
         printContext(ctxt);
         printMsgid(msg.msgid);
         printMsgidPlural(msg.msgid_plural);
-        const translation = Array.from(translationStream(msg.msgstr));
+        const translation = await translationStream(msg.msgstr);
         const data = stream.next(translation);
         [value, done] = [data.value, data.done];
         console.log();

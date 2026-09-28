@@ -7,7 +7,7 @@
 
 "use strict";
 
-import chalk from "chalk";
+import { cyan, red } from "./style";
 import { execSync, spawn } from "child_process";
 
 // https://github.com/sindresorhus/opn#app
@@ -52,13 +52,11 @@ function executeNodeScript(scriptPath: string, url: string) {
         if (code !== 0) {
             console.log();
             console.log(
-                chalk.red(
+                red(
                     "The script specified as BROWSER environment variable failed."
                 )
             );
-            console.log(
-                chalk.cyan(scriptPath) + " exited with code " + code + "."
-            );
+            console.log(cyan(scriptPath) + " exited with code " + code + ".");
             console.log();
             return;
         }

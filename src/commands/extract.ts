@@ -1,4 +1,4 @@
-import * as ora from "ora";
+import progressState from "../lib/progress";
 import * as fs from "fs";
 import * as c3poTypes from "../types";
 import { extractAll } from "../lib/extract";
@@ -12,7 +12,7 @@ async function extract(
     ttagOverrideOpts?: c3poTypes.TtagOpts,
     ttagRcOpts?: c3poTypes.TtagRc
 ) {
-    const progress: c3poTypes.Progress = ora(
+    const progress: c3poTypes.Progress = progressState(
         `[ttag] extracting translations to ${output} ...`
     );
 

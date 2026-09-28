@@ -2,7 +2,7 @@
 Compare designated pofile with pot file extracted from all files in all paths
 */
 
-import * as ora from "ora";
+import progressState from "../lib/progress";
 import * as fs from "fs";
 import { extractAll } from "../lib/extract";
 import { checkDuplicateKeys } from "../lib/checkDuplicateKeys";
@@ -73,13 +73,13 @@ async function check(
     const errMessage = checkDuplicateKeys(translations);
 
     if (errMessage) {
-        const progress: c3poTypes.Progress = ora();
+        const progress: c3poTypes.Progress = progressState();
         progress.fail(errMessage);
         process.exit(1);
     }
 
     const paths = resolvePaths(src, ignore);
-    const progress: c3poTypes.Progress = ora(
+    const progress: c3poTypes.Progress = progressState(
         `[ttag] checking translations from ${paths} ...`
     );
     // progress.start();
