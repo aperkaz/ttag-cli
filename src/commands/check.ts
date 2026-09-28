@@ -4,7 +4,7 @@ Compare designated pofile with pot file extracted from all files in all paths
 
 import progressState from "../lib/progress";
 import * as fs from "fs";
-import { extractAll } from "../lib/extract";
+import { extractData } from "../lib/extract";
 import { checkDuplicateKeys } from "../lib/checkDuplicateKeys";
 import * as c3poTypes from "../types";
 import { parse, PoData } from "../lib/parser";
@@ -84,8 +84,12 @@ async function check(
     );
     // progress.start();
 
-    const keysOnly = parse(
-        await extractAll(paths, lang, progress, overrideOpts, ttagRcOpts)
+    const keysOnly = await extractData(
+        paths,
+        lang,
+        progress,
+        overrideOpts,
+        ttagRcOpts
     );
 
     let untranslatedStream = getUntranslated(translations, keysOnly);

@@ -1,7 +1,7 @@
 import progress from "../lib/progress";
 import * as ttagTypes from "../types";
 import * as fs from "fs";
-import { extractAll } from "../lib/extract";
+import { extractData } from "../lib/extract";
 import { updatePo } from "../lib/update";
 import { parse } from "../lib/parser";
 import { serialize, SerializeOptions } from "../lib/serializer";
@@ -24,14 +24,12 @@ async function update(
     );
     progressState.start();
     try {
-        const pot = parse(
-            await extractAll(
-                paths,
-                lang,
-                progressState,
-                ttagOverrideOpts,
-                ttagRcOpts
-            )
+        const pot = await extractData(
+            paths,
+            lang,
+            progressState,
+            ttagOverrideOpts,
+            ttagRcOpts
         );
         const errMessage = checkDuplicateKeys(pot);
 

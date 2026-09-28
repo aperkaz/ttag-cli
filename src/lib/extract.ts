@@ -3,6 +3,8 @@ import ignore from "ignore";
 import * as ttagTypes from "../types";
 import { mergeOpts } from "./ttagPluginOverride";
 import { canUseOxc, extractWithOxc } from "./oxcExtract";
+import { compileCatalog } from "./oxcExtract";
+import { parse, PoData } from "./parser";
 
 export async function extractAll(
     paths: string[],
@@ -11,6 +13,18 @@ export async function extractAll(
     overrideOpts?: ttagTypes.TtagOpts & ttagTypes.CliOpts,
     rcOpts?: ttagTypes.TtagRc
 ): Promise<string> {
+    return compileCatalog(
+        await extractData(paths, lang, progress, overrideOpts, rcOpts)
+    );
+}
+
+export async function extractData(
+    paths: string[],
+    lang: string,
+    progress: ttagTypes.Progress,
+    overrideOpts?: ttagTypes.TtagOpts & ttagTypes.CliOpts,
+    rcOpts?: ttagTypes.TtagRc
+): Promise<PoData> {
     let ttagOpts: ttagTypes.TtagOpts = {
         extract: {},
         sortByMsgid: overrideOpts && overrideOpts.sortByMsgid,
@@ -38,12 +52,14 @@ export async function extractAll(
     }
 
     const { extractWithBabel } = await import("./babelExtract");
-    return extractWithBabel(
-        sourceFiles,
-        sources,
-        ttagOpts,
-        progress,
-        overrideOpts
+    return parse(
+        await extractWithBabel(
+            sourceFiles,
+            sources,
+            ttagOpts,
+            progress,
+            overrideOpts
+        )
     );
 }
 

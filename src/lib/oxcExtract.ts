@@ -39,7 +39,7 @@ export async function extractWithOxc(
     sources: Map<string, string>,
     lang: string,
     opts: ttagTypes.TtagOpts
-): Promise<string | null> {
+): Promise<PoData | null> {
     let parseSync: typeof import("oxc-parser").parseSync;
     try {
         ({ parseSync } = await importEsm("oxc-parser"));
@@ -74,7 +74,7 @@ export async function extractWithOxc(
             )
         );
     }
-    return serialize(entries, opts);
+    return buildCatalog(entries, opts);
 }
 
 function extractFile(
@@ -87,6 +87,7 @@ function extractFile(
 ): Message[] {
     const aliases = new Map<string, string>();
     const imports = new Set<string>(opts.discover || []);
+    const candidates: Node[] = [];
     for (const [alias, api] of Object.entries(apiNames))
         aliases.set(alias, api);
 
@@ -117,11 +118,20 @@ function extractFile(
                 }
             }
         }
+        if (
+            node.type === "TaggedTemplateExpression" ||
+            node.type === "CallExpression"
+        ) {
+            candidates.push(node);
+        }
     });
 
     const entries: Message[] = [];
-    const lineStarts = getLineStarts(source);
-    walk(program, node => {
+    const location = opts.extract?.location || "full";
+    const relative = filename.replace(`${process.cwd()}${path.sep}`, "");
+    const lineStarts = location === "full" ? getLineStarts(source) : [];
+    const plurals = Number(getNPlurals(lang));
+    for (const node of candidates) {
         let context: string | undefined;
         let target = node;
         if (node.type === "TaggedTemplateExpression") {
@@ -130,30 +140,30 @@ function extractFile(
                 context = contextual.context;
                 target = { ...node, tag: contextual.target };
             }
-            if (target.tag.type !== "Identifier") return;
+            if (target.tag.type !== "Identifier") continue;
             const api = aliases.get(target.tag.name);
             if (
                 (api !== "t" && api !== "jt") ||
                 (!context && !imports.has(target.tag.name))
             )
-                return;
+                continue;
             const msgid = templateToMsgid(target.quasi, source, opts);
             validateUseful(
                 msgid,
                 source.slice(target.quasi.start + 1, target.quasi.end - 1)
             );
             entries.push(makeEntry(msgid, node, context));
-            return;
+            continue;
         }
-        if (node.type !== "CallExpression") return;
+        if (node.type !== "CallExpression") continue;
         const contextual = getContextTarget(node.callee);
         if (contextual) {
             context = contextual.context;
             target = { ...node, callee: contextual.target };
         }
-        if (target.callee.type !== "Identifier") return;
+        if (target.callee.type !== "Identifier") continue;
         const api = aliases.get(target.callee.name);
-        if (!context && !imports.has(target.callee.name)) return;
+        if (!context && !imports.has(target.callee.name)) continue;
         if (api === "gettext" && target.arguments.length) {
             const arg = target.arguments[0];
             if (arg.type !== "Literal" || typeof arg.value !== "string") {
@@ -178,7 +188,7 @@ function extractFile(
             ) {
                 throw new Error("First argument must use 'msgid' tag");
             }
-            const expected = Number(getNPlurals(lang));
+            const expected = plurals;
             if (forms.length !== expected) {
                 throw new Error(
                     `Expected to have ${expected} plural forms but have ${forms.length} instead`
@@ -192,18 +202,13 @@ function extractFile(
             entry.msgstr = Array(expected).fill("");
             entries.push(entry);
         }
-    });
+    }
     return entries;
 
     function makeEntry(msgid: string, node: Node, context?: string): Message {
         const entry: Message = { msgid, msgstr: [""] };
         if (context !== undefined) entry.msgctxt = context;
-        const location = opts.extract?.location || "full";
         if (location !== "never") {
-            const relative = filename.replace(
-                `${process.cwd()}${path.sep}`,
-                ""
-            );
             entry.comments = {
                 reference:
                     location === "file"
@@ -286,7 +291,7 @@ function validateUseful(msgid: string, display: string = msgid): void {
     }
 }
 
-function serialize(entries: Message[], opts: ttagTypes.TtagOpts): string {
+function buildCatalog(entries: Message[], opts: ttagTypes.TtagOpts): PoData {
     const data: PoData = {
         charset: "UTF-8",
         headers: {
@@ -328,6 +333,10 @@ function serialize(entries: Message[], opts: ttagTypes.TtagOpts): string {
             data.translations[context] = sorted;
         }
     }
+    return data;
+}
+
+export function compileCatalog(data: PoData): string {
     return po.compile(data).toString();
 }
 
@@ -336,14 +345,21 @@ function getExtractedComment(
     comments: Node[],
     source: string
 ): string | undefined {
-    const comment = [...comments]
-        .reverse()
-        .find(
-            item =>
-                item.end <= node.start &&
-                /^[\s;{}()]*$/.test(source.slice(item.end, node.start))
-        );
-    return comment?.value;
+    let low = 0;
+    let high = comments.length;
+    while (low < high) {
+        const middle = (low + high) >>> 1;
+        if (comments[middle].end <= node.start) low = middle + 1;
+        else high = middle;
+    }
+    const comment = comments[low - 1];
+    if (
+        !comment ||
+        !/^[\s;{}()]*$/.test(source.slice(comment.end, node.start))
+    ) {
+        return undefined;
+    }
+    return comment?.value.trimStart();
 }
 
 function isTtagModule(value: string, allowNpm: boolean): boolean {
@@ -364,15 +380,10 @@ function isTtagRequire(node: Node): boolean {
     );
 }
 
-function walk(
-    node: Node,
-    visitor: (node: Node, parents: Node[]) => void,
-    parents: Node[] = []
-): void {
+function walk(node: Node, visitor: (node: Node) => void): void {
     if (!node || typeof node !== "object" || typeof node.type !== "string")
         return;
-    visitor(node, parents);
-    const nextParents = [...parents, node];
+    visitor(node);
     for (const key of Object.keys(node)) {
         if (
             key === "type" ||
@@ -383,9 +394,9 @@ function walk(
             continue;
         const value = node[key];
         if (Array.isArray(value)) {
-            for (const child of value) walk(child, visitor, nextParents);
+            for (const child of value) walk(child, visitor);
         } else {
-            walk(value, visitor, nextParents);
+            walk(value, visitor);
         }
     }
 }
