@@ -5,6 +5,18 @@ import { mergeOpts } from "./ttagPluginOverride";
 import { canUseOxc, extractWithOxc } from "./oxcExtract";
 import { compileCatalog } from "./oxcExtract";
 import { parse, PoData } from "./parser";
+import { extname } from "path";
+
+const supportedExtensions = new Set([
+    ".js",
+    ".jsx",
+    ".ts",
+    ".tsx",
+    ".mjs",
+    ".cjs",
+    ".vue",
+    ".svelte"
+]);
 
 export async function extractAll(
     paths: string[],
@@ -35,7 +47,7 @@ export async function extractData(
 
     const sourceFiles = Array.from(
         new Set(filterIgnoredFiles(rcOpts?.extractor?.paths || paths, rcOpts))
-    );
+    ).filter(filename => supportedExtensions.has(extname(filename)));
     const sources = new Map<string, string>();
     if (canUseOxc(sourceFiles, overrideOpts)) {
         for (const filename of sourceFiles) {

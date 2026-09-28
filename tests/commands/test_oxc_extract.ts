@@ -56,3 +56,18 @@ test("Babel fallback handles files without translations", () => {
     });
     output.removeCallback();
 });
+
+test("ignores unsupported files without falling back to Babel", () => {
+    const output = tempFile();
+    execFileSync("ts-node", [
+        "src/index.ts",
+        "extract",
+        "-o",
+        output.name,
+        path.resolve(__dirname, "../fixtures/baseTest")
+    ]);
+    expect(fs.readFileSync(output.name, "utf8")).toContain(
+        'msgid "test translation ${ name }"'
+    );
+    output.removeCallback();
+});
