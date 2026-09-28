@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
-import * as tmp from "tmp";
+import { tempFile } from "../../src/lib/temp";
 import { execFileSync } from "child_process";
 import { parse } from "../../src/lib/parser";
 
@@ -17,8 +17,8 @@ const fixtures = [
 ].map(file => path.resolve(__dirname, `../fixtures/${file}`));
 
 test("Oxc extraction matches Babel PO data", () => {
-    const oxcFile = tmp.fileSync();
-    const babelFile = tmp.fileSync();
+    const oxcFile = tempFile();
+    const babelFile = tempFile();
     const args = ["src/index.ts", "extract", "-l", "uk"];
 
     execFileSync("ts-node", [...args, "-o", oxcFile.name, ...fixtures]);

@@ -1,29 +1,47 @@
-import { globSync } from "glob";
-import * as fs from "fs";
-const isGlob = require("is-glob");
+import { globSync, lstatSync } from "fs";
+import { resolve } from "path";
 
 export function resolvePaths(
     src: string[],
     ignore?: string | string[]
 ): string[] {
     const toGlob = (filePath: string): string => {
-        if (fs.lstatSync(filePath).isDirectory()) {
+        if (lstatSync(filePath).isDirectory()) {
             return `${filePath.endsWith("/") ? filePath : `${filePath}/`}**/*`;
         }
         return filePath;
     };
 
     const srcGlob = src.map(filePath =>
-        isGlob(filePath) ? filePath : toGlob(filePath)
+        hasGlobMagic(filePath) ? filePath : toGlob(filePath)
     );
     const ignores = typeof ignore === "string" ? [ignore] : ignore;
     const ignoreGlob = ignores?.map(filePath =>
-        isGlob(filePath) ? filePath : toGlob(filePath)
+        hasGlobMagic(filePath) ? filePath : toGlob(filePath)
     );
 
-    return globSync(srcGlob, {
-        absolute: true,
-        nodir: true,
-        ignore: ignoreGlob
-    });
+    const excluded = new Set(
+        (ignoreGlob || []).flatMap(pattern =>
+            globSync(pattern).map(filePath => resolve(filePath))
+        )
+    );
+    return Array.from(
+        new Set(
+            srcGlob.flatMap(pattern =>
+                globSync(pattern).map(filePath => resolve(filePath))
+            )
+        )
+    )
+        .filter(
+            filePath =>
+                !excluded.has(filePath) && !lstatSync(filePath).isDirectory()
+        )
+        .sort((a, b) => {
+            const depth = a.split(/[\\/]/).length - b.split(/[\\/]/).length;
+            return depth || a.localeCompare(b);
+        });
+}
+
+function hasGlobMagic(filePath: string): boolean {
+    return /[*?\[\]{}()!+@]/.test(filePath);
 }

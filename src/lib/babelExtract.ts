@@ -1,8 +1,9 @@
 import "../declarations";
 import * as babel from "@babel/core";
 import * as fs from "fs";
-import * as tmp from "tmp";
 import { extname } from "path";
+import * as os from "os";
+import * as path from "path";
 import { makeExtractBabelConf } from "../defaults";
 import * as ttagTypes from "../types";
 import { TransformFn, pathsWalk } from "./pathsWalk";
@@ -16,8 +17,9 @@ export async function extractWithBabel(
     progress: ttagTypes.Progress,
     overrideOpts?: ttagTypes.TtagOpts & ttagTypes.CliOpts
 ): Promise<string> {
-    const tmpFile = tmp.fileSync();
-    ttagOpts.extract = { ...ttagOpts.extract, output: tmpFile.name };
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "ttag-"));
+    const tmpFile = path.join(tmpDir, "translations.pot");
+    ttagOpts.extract = { ...ttagOpts.extract, output: tmpFile };
     const babelOptions = new Map<string, babel.TransformOptions>();
     const getBabelOptions = (filename: string) => {
         const extension = extname(filename);
@@ -56,40 +58,35 @@ export async function extractWithBabel(
                     break;
                 }
                 case ".svelte": {
-                    const { walk } = require("estree-walker");
                     const { parse: parseSvelte } = require("svelte/compiler");
                     const source = getSource(filepath);
                     const jsCodes: string[] = [];
                     const { html, instance, module } = parseSvelte(source);
                     if (module) {
-                        walk(module, {
-                            enter(node: TemplateNode) {
-                                if (node.type === "Program") {
-                                    jsCodes.push(source.slice(node.start, node.end));
-                                }
+                        walkAst(module, (node: TemplateNode) => {
+                            if (node.type === "Program") {
+                                jsCodes.push(
+                                    source.slice(node.start, node.end)
+                                );
                             }
                         });
                     }
-                    walk(instance, {
-                        enter(node: TemplateNode) {
-                            if (node.type === "Program") {
-                                jsCodes.push(source.slice(node.start, node.end));
-                            }
+                    walkAst(instance, (node: TemplateNode) => {
+                        if (node.type === "Program") {
+                            jsCodes.push(source.slice(node.start, node.end));
                         }
                     });
-                    walk(html, {
-                        enter(node: TemplateNode) {
-                            if (
-                                node.type === "MustacheTag" ||
-                                node.type === "RawMustacheTag"
-                            ) {
-                                jsCodes.push(
-                                    `(${source.slice(
-                                        node.expression.start,
-                                        node.expression.end
-                                    )});`
-                                );
-                            }
+                    walkAst(html, (node: TemplateNode) => {
+                        if (
+                            node.type === "MustacheTag" ||
+                            node.type === "RawMustacheTag"
+                        ) {
+                            jsCodes.push(
+                                `(${source.slice(
+                                    node.expression.start,
+                                    node.expression.end
+                                )});`
+                            );
                         }
                     });
                     babel.transformSync(jsCodes.join("\n"), {
@@ -126,12 +123,21 @@ export async function extractWithBabel(
                 true
             )
         });
-        return fs.readFileSync(tmpFile.name, "utf8");
+        return fs.readFileSync(tmpFile, "utf8");
     } finally {
-        tmpFile.removeCallback();
+        fs.rmSync(tmpDir, { recursive: true, force: true });
     }
 
     function getSource(filename: string): string {
         return sources.get(filename) || fs.readFileSync(filename, "utf8");
+    }
+}
+
+function walkAst(node: any, visit: (node: any) => void): void {
+    if (!node || typeof node !== "object") return;
+    if (typeof node.type === "string") visit(node);
+    for (const value of Object.values(node)) {
+        if (Array.isArray(value)) value.forEach(child => walkAst(child, visit));
+        else if (value && typeof value === "object") walkAst(value, visit);
     }
 }

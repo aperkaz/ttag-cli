@@ -1,7 +1,7 @@
 import * as path from "path";
 import * as fs from "fs";
 import { execSync } from "child_process";
-import * as tmp from "tmp";
+import { tempFile } from "../../src/lib/temp";
 
 const originalPo = `msgid ""
 msgstr ""
@@ -20,7 +20,7 @@ const srcPath = path.resolve(__dirname, "../fixtures/updateTest/test.js");
 const srcPathGlob = path.resolve(__dirname, "../fixtures/updateTest/test.*");
 
 test("test update po", () => {
-    const tmpFile = tmp.fileSync();
+    const tmpFile = tempFile();
     fs.writeFileSync(tmpFile.name, originalPo);
     execSync(`ts-node src/index.ts update ${tmpFile.name} ${srcPath}`);
     const result = fs.readFileSync(tmpFile.name).toString();
@@ -29,7 +29,7 @@ test("test update po", () => {
 });
 
 test("test for plugin override", () => {
-    const tmpFile = tmp.fileSync();
+    const tmpFile = tempFile();
     fs.writeFileSync(tmpFile.name, originalPo);
     execSync(
         `ts-node src/index.ts update --discover=_  ${tmpFile.name} ${srcPath}`
@@ -40,7 +40,7 @@ test("test for plugin override", () => {
 });
 
 test("test update with multiple discover po (plugins settings override test)", () => {
-    const tmpFile = tmp.fileSync();
+    const tmpFile = tempFile();
     fs.writeFileSync(tmpFile.name, originalPo);
     execSync(
         `ts-node src/index.ts update --discover=_ --discover=gettext ${tmpFile.name} ${srcPath}`
@@ -51,7 +51,7 @@ test("test update with multiple discover po (plugins settings override test)", (
 });
 
 test("should sort the output alphabetically (apply sortByMsgid option)", () => {
-    const tmpFile = tmp.fileSync();
+    const tmpFile = tempFile();
     fs.writeFileSync(tmpFile.name, originalPo);
     execSync(
         `ts-node src/index.ts update --sortByMsgid ${tmpFile.name} ${srcPath}`
@@ -66,7 +66,7 @@ const commentsTest = path.resolve(
     "../fixtures/updateTest/comments.jsx"
 );
 test("should extract comments by default", () => {
-    const tmpFile = tmp.fileSync();
+    const tmpFile = tempFile();
     fs.writeFileSync(tmpFile.name, originalPo);
     execSync(`ts-node src/index.ts update ${tmpFile.name} ${commentsTest}`);
     const result = fs.readFileSync(tmpFile.name).toString();
@@ -81,7 +81,7 @@ const contextTest = path.resolve(
 );
 
 test("should extract from context", () => {
-    const tmpFile = tmp.fileSync();
+    const tmpFile = tempFile();
     fs.writeFileSync(tmpFile.name, originalPo);
     execSync(`ts-node src/index.ts update ${tmpFile.name} ${contextTest}`);
     const result = fs.readFileSync(tmpFile.name).toString();
@@ -91,7 +91,7 @@ test("should extract from context", () => {
 });
 
 test("should extract context consistently", () => {
-    const tmpFile = tmp.fileSync();
+    const tmpFile = tempFile();
     fs.writeFileSync(tmpFile.name, originalPo);
     execSync(`ts-node src/index.ts update ${tmpFile.name} ${contextTest}`);
     execSync(`ts-node src/index.ts update ${tmpFile.name} ${contextTest}`);
@@ -107,7 +107,7 @@ const hoistingTest = path.resolve(
 );
 
 test("should not transpile const to vars (avoid scope hoisting)", () => {
-    const tmpFile = tmp.fileSync();
+    const tmpFile = tempFile();
     fs.writeFileSync(tmpFile.name, originalPo);
     execSync(`ts-node src/index.ts update ${tmpFile.name} ${hoistingTest}`);
     const result = fs.readFileSync(tmpFile.name).toString();
@@ -147,7 +147,7 @@ const reactCompilerTest = path.resolve(
 );
 
 test("should transpile with react compiler enabled", () => {
-    const tmpFile = tmp.fileSync();
+    const tmpFile = tempFile();
     fs.writeFileSync(tmpFile.name, originalPo);
     execSync(
         `ts-node src/index.ts update --lang ru ${tmpFile.name} ${reactCompilerTest}`
@@ -158,7 +158,7 @@ test("should transpile with react compiler enabled", () => {
 });
 
 test("should apply useProjectBabelrc opt and fail with react compiler", () => {
-    const tmpFile = tmp.fileSync();
+    const tmpFile = tempFile();
     fs.writeFileSync(tmpFile.name, originalPo);
     try {
         execSync(
@@ -174,7 +174,7 @@ test("should apply useProjectBabelrc opt and fail with react compiler", () => {
 });
 
 test("test update po with glob", () => {
-    const tmpFile = tmp.fileSync();
+    const tmpFile = tempFile();
     fs.writeFileSync(tmpFile.name, originalPo);
     execSync(`ts-node src/index.ts update ${tmpFile.name} ${srcPathGlob}`);
     const result = fs.readFileSync(tmpFile.name).toString();

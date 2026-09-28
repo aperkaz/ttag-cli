@@ -8,9 +8,7 @@
 "use strict";
 
 import chalk from "chalk";
-import { execSync } from "child_process";
-import * as spawn from "cross-spawn";
-import opn = require("open");
+import { execSync, spawn } from "child_process";
 
 // https://github.com/sindresorhus/opn#app
 const OSX_CHROME = "google chrome";
@@ -47,7 +45,7 @@ function getBrowserEnv(): BrowserEnv {
 
 function executeNodeScript(scriptPath: string, url: string) {
     const extraArgs = process.argv.slice(2);
-    const child = spawn("node", [scriptPath, ...extraArgs, url], {
+    const child = spawn(process.execPath, [scriptPath, ...extraArgs, url], {
         stdio: "inherit"
     });
     child.on("close", (code: number) => {
@@ -103,11 +101,20 @@ function startBrowserProcess(browser: string, url: string) {
         browser = "";
     }
 
-    // Fallback to opn
-    // (It will always open new tab)
     try {
-        var options = { app: browser };
-        opn(url, options).catch(() => {}); // Prevent `unhandledRejection` error.
+        const command =
+            browser ||
+            (process.platform === "darwin"
+                ? "open"
+                : process.platform === "win32"
+                ? "cmd"
+                : "xdg-open");
+        const args = browser
+            ? [url]
+            : process.platform === "win32"
+            ? ["/c", "start", "", url]
+            : [url];
+        spawn(command, args, { detached: true, stdio: "ignore" }).unref();
         return true;
     } catch (err) {
         return false;

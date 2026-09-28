@@ -2,7 +2,6 @@ import "../declarations";
 import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
-import fetch from "node-fetch";
 import * as serialize from "serialize-javascript";
 
 import * as Spellchecker from "hunspell-spellchecker";
@@ -55,8 +54,12 @@ export async function getChecker(locale: string): Promise<Checker> {
         }
     }
     const responseAff = await fetch(`${BASEPATH}${LOCALEDICTMAP[locale].aff}`);
+    if (!responseAff.ok)
+        throw new Error(`Failed to download dictionary: ${responseAff.status}`);
     const aff = await responseAff.text();
     const responseDic = await fetch(`${BASEPATH}${LOCALEDICTMAP[locale].dic}`);
+    if (!responseDic.ok)
+        throw new Error(`Failed to download dictionary: ${responseDic.status}`);
     const dic = await responseDic.text();
     const spellchecker = new Spellchecker();
     const dict = spellchecker.parse({ aff, dic });

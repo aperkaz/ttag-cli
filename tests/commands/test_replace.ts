@@ -1,17 +1,15 @@
 import * as path from "path";
 import * as fs from "fs";
 import { execSync } from "child_process";
-import * as tmp from "tmp";
+import { tempDir } from "../../src/lib/temp";
 
 const replaceDirPath = path.resolve(__dirname, "../fixtures/replaceTest");
 const poPath = path.join(replaceDirPath, "translations.po");
 
 test("replace translations", () => {
-    const tmpFolder = tmp.dirSync();
+    const tmpFolder = tempDir();
     execSync(
-        `ts-node src/index.ts replace ${poPath} ${tmpFolder.name} ${
-            replaceDirPath
-        }`
+        `ts-node src/index.ts replace ${poPath} ${tmpFolder.name} ${replaceDirPath}`
     );
     const testFile = fs
         .readFileSync(path.join(tmpFolder.name, "test.js"))
@@ -24,11 +22,9 @@ test("replace translations", () => {
 });
 
 test("override babel defaults", () => {
-    const tmpFolder = tmp.dirSync();
+    const tmpFolder = tempDir();
     execSync(
-        `ts-node src/index.ts replace --discover=_ ${poPath} ${
-            tmpFolder.name
-        } ${replaceDirPath}`
+        `ts-node src/index.ts replace --discover=_ ${poPath} ${tmpFolder.name} ${replaceDirPath}`
     );
     const globalFile = fs
         .readFileSync(path.join(tmpFolder.name, "nested/global.js"))

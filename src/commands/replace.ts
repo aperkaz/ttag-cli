@@ -6,7 +6,6 @@ import * as babel from "@babel/core";
 import * as path from "path";
 import * as fs from "fs";
 import { TransformFn, pathsWalk } from "../lib/pathsWalk";
-import * as mkdirp from "mkdirp";
 
 async function replace(
     pofile: string,
@@ -34,7 +33,7 @@ async function replace(
         const result = babel.transformFileSync(file, babelOptions);
         const dir = path.dirname(resultPath);
         if (dir !== ".") {
-            mkdirp.sync(dir);
+            fs.mkdirSync(dir, { recursive: true });
         }
         if (!result) {
             progress.fail("Failed to replace");
