@@ -8,6 +8,7 @@ import { makeExtractBabelConf } from "../defaults";
 import * as ttagTypes from "../types";
 import { TransformFn, pathsWalk } from "./pathsWalk";
 import { mergeOpts } from "./ttagPluginOverride";
+import { canUseOxc, extractWithOxc } from "./oxcExtract";
 
 type TemplateNode = any;
 
@@ -18,9 +19,8 @@ export async function extractAll(
     overrideOpts?: ttagTypes.TtagOpts & ttagTypes.CliOpts,
     rcOpts?: ttagTypes.TtagRc
 ): Promise<string> {
-    const tmpFile = tmp.fileSync();
     let ttagOpts: ttagTypes.TtagOpts = {
-        extract: { output: tmpFile.name },
+        extract: {},
         sortByMsgid: overrideOpts && overrideOpts.sortByMsgid,
         addComments: true
     };
@@ -30,10 +30,31 @@ export async function extractAll(
     if (overrideOpts) {
         ttagOpts = mergeOpts(ttagOpts, overrideOpts);
     }
+    const walkingPaths = getWalkingPaths(paths, rcOpts);
+    const sourceFiles = filterIgnoredFiles(walkingPaths, rcOpts);
+    if (canUseOxc(sourceFiles, overrideOpts)) {
+        const sources = new Map(
+            sourceFiles.map(filename => [
+                filename,
+                fs.readFileSync(filename, "utf8")
+            ])
+        );
+        const result = await extractWithOxc(
+            sourceFiles,
+            sources,
+            lang,
+            ttagOpts
+        );
+        if (result !== null) return result;
+    }
+
+    const tmpFile = tmp.fileSync();
+    ttagOpts.extract = { ...ttagOpts.extract, output: tmpFile.name };
     const babelOptions = new Map<string, babel.TransformOptions>();
     const getBabelOptions = (filename: string) => {
         const extension = extname(filename);
-        const parserKind = extension === ".ts" ? "ts" : extension === ".tsx" ? "tsx" : "js";
+        const parserKind =
+            extension === ".ts" ? "ts" : extension === ".tsx" ? "tsx" : "js";
         let options = babelOptions.get(parserKind);
         if (!options) {
             options = makeExtractBabelConf(
@@ -124,7 +145,10 @@ export async function extractAll(
                     break;
                 }
                 default:
-                    babel.transformFileSync(filepath, getBabelOptions(filepath));
+                    babel.transformFileSync(
+                        filepath,
+                        getBabelOptions(filepath)
+                    );
             }
         } catch (err) {
             const error = err as any;
@@ -139,7 +163,7 @@ export async function extractAll(
         }
     };
     await pathsWalk(
-        getWalkingPaths(paths, rcOpts),
+        walkingPaths,
         progress,
         decorateTransformFn(transformFn, rcOpts)
     );
@@ -148,7 +172,8 @@ export async function extractAll(
         ...makeExtractBabelConf(
             ttagOpts,
             {
-                useProjectBabelrc: overrideOpts && overrideOpts.useProjectBabelrc
+                useProjectBabelrc:
+                    overrideOpts && overrideOpts.useProjectBabelrc
             },
             "ttag-extraction-finalize.js",
             true
@@ -157,6 +182,16 @@ export async function extractAll(
     const result = fs.readFileSync(tmpFile.name).toString();
     tmpFile.removeCallback();
     return result;
+}
+
+function filterIgnoredFiles(
+    paths: string[],
+    rcOpts?: ttagTypes.TtagRc
+): string[] {
+    const ignoreFiles = rcOpts?.extractor?.ignoreFiles;
+    if (!ignoreFiles) return paths;
+    const ig = ignore().add(ignoreFiles);
+    return paths.filter(filename => !ig.ignores(filename));
 }
 
 function getWalkingPaths(
