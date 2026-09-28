@@ -1,7 +1,6 @@
 import * as path from "path";
 import { po } from "gettext-parser";
 import { getNPlurals } from "plural-forms";
-import dedent from "dedent";
 import { PoData, Message } from "./parser";
 import * as ttagTypes from "../types";
 
@@ -281,6 +280,18 @@ function expressionToString(node: Node, source: string): string {
             node.end
         )}}' in localized strings`
     );
+}
+
+function dedent(value: string): string {
+    const lines = value.replace(/^\n|\n\s*$/g, "").split("\n");
+    const indentation = lines
+        .filter(line => line.trim())
+        .reduce(
+            (minimum, line) => Math.min(minimum, /^\s*/.exec(line)![0].length),
+            Infinity
+        );
+    const amount = Number.isFinite(indentation) ? indentation : 0;
+    return lines.map(line => line.slice(amount)).join("\n");
 }
 
 function validateUseful(msgid: string, display: string = msgid): void {

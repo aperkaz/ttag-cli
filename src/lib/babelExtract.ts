@@ -43,7 +43,10 @@ export async function extractWithBabel(
         try {
             switch (extname(filepath)) {
                 case ".vue": {
-                    const { parseComponent } = require("vue-sfc-parser");
+                    const { parseComponent } = requireOptional(
+                        "vue-sfc-parser",
+                        "Vue extraction requires vue-sfc-parser"
+                    );
                     const source = getSource(filepath);
                     const script = parseComponent(source).script;
                     if (script) {
@@ -58,7 +61,10 @@ export async function extractWithBabel(
                     break;
                 }
                 case ".svelte": {
-                    const { parse: parseSvelte } = require("svelte/compiler");
+                    const { parse: parseSvelte } = requireOptional(
+                        "svelte/compiler",
+                        "Svelte extraction requires svelte"
+                    );
                     const source = getSource(filepath);
                     const jsCodes: string[] = [];
                     const { html, instance, module } = parseSvelte(source);
@@ -139,5 +145,16 @@ function walkAst(node: any, visit: (node: any) => void): void {
     for (const value of Object.values(node)) {
         if (Array.isArray(value)) value.forEach(child => walkAst(child, visit));
         else if (value && typeof value === "object") walkAst(value, visit);
+    }
+}
+
+function requireOptional(name: string, message: string): any {
+    try {
+        return require(name);
+    } catch (error) {
+        if ((error as NodeJS.ErrnoException).code === "MODULE_NOT_FOUND") {
+            throw new Error(`${message}. Install it in your project.`);
+        }
+        throw error;
     }
 }
