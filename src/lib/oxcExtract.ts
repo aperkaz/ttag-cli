@@ -87,10 +87,12 @@ function extractFile(
     const aliases = new Map<string, string>();
     const imports = new Set<string>(opts.discover || []);
     const candidates: Node[] = [];
+    const parents = new WeakMap<Node, Node>();
     for (const [alias, api] of Object.entries(apiNames))
         aliases.set(alias, api);
 
-    walk(program, node => {
+    walk(program, (node, parent) => {
+        if (parent) parents.set(node, parent);
         if (
             node.type === "ImportDeclaration" &&
             isTtagModule(node.source.value, true)
@@ -220,7 +222,7 @@ function extractFile(
             entry.comments.flag = "javascript-format";
         }
         const extracted = opts.addComments
-            ? getExtractedComment(node, comments, source)
+            ? getExtractedComment(node, parents, comments, source)
             : undefined;
         if (extracted) {
             entry.comments = entry.comments || {};
@@ -283,15 +285,27 @@ function expressionToString(node: Node, source: string): string {
 }
 
 function dedent(value: string): string {
-    const lines = value.replace(/^\n|\n\s*$/g, "").split("\n");
-    const indentation = lines
-        .filter(line => line.trim())
-        .reduce(
-            (minimum, line) => Math.min(minimum, /^\s*/.exec(line)![0].length),
-            Infinity
-        );
-    const amount = Number.isFinite(indentation) ? indentation : 0;
-    return lines.map(line => line.slice(amount)).join("\n");
+    const lines = value.split("\n");
+    let indentation: number | null = null;
+    for (const line of lines) {
+        const match = line.match(/^(\s+)\S+/);
+        if (match) {
+            indentation =
+                indentation === null
+                    ? match[1].length
+                    : Math.min(indentation, match[1].length);
+        }
+    }
+    if (indentation !== null) {
+        value = lines
+            .map(line =>
+                line[0] === " " || line[0] === "\t"
+                    ? line.slice(indentation!)
+                    : line
+            )
+            .join("\n");
+    }
+    return value.trim().replace(/\\n/g, "\n");
 }
 
 function validateUseful(msgid: string, display: string = msgid): void {
@@ -353,24 +367,42 @@ export function compileCatalog(data: PoData): string {
 
 function getExtractedComment(
     node: Node,
+    parents: WeakMap<Node, Node>,
     comments: Node[],
     source: string
 ): string | undefined {
+    const extracted: string[] = [];
+    const seen = new Set<number>();
+    let current: Node | undefined = node;
+    while (current) {
+        const comment = precedingComment(current.start, comments, source);
+        if (comment && !seen.has(comment.start)) {
+            seen.add(comment.start);
+            extracted.unshift(comment.value.trimStart());
+        }
+        if (/Statement$|Declaration$/.test(current.type)) break;
+        current = parents.get(current);
+    }
+    return extracted.length ? extracted.join("\n") : undefined;
+}
+
+function precedingComment(
+    start: number,
+    comments: Node[],
+    source: string
+): Node | undefined {
     let low = 0;
     let high = comments.length;
     while (low < high) {
         const middle = (low + high) >>> 1;
-        if (comments[middle].end <= node.start) low = middle + 1;
+        if (comments[middle].end <= start) low = middle + 1;
         else high = middle;
     }
     const comment = comments[low - 1];
-    if (
-        !comment ||
-        !/^[\s;{}()]*$/.test(source.slice(comment.end, node.start))
-    ) {
+    if (!comment || !/^[\s;{}()]*$/.test(source.slice(comment.end, start))) {
         return undefined;
     }
-    return comment?.value.trimStart();
+    return comment;
 }
 
 function isTtagModule(value: string, allowNpm: boolean): boolean {
@@ -391,10 +423,14 @@ function isTtagRequire(node: Node): boolean {
     );
 }
 
-function walk(node: Node, visitor: (node: Node) => void): void {
+function walk(
+    node: Node,
+    visitor: (node: Node, parent?: Node) => void,
+    parent?: Node
+): void {
     if (!node || typeof node !== "object" || typeof node.type !== "string")
         return;
-    visitor(node);
+    visitor(node, parent);
     for (const key of Object.keys(node)) {
         if (
             key === "type" ||
@@ -405,9 +441,9 @@ function walk(node: Node, visitor: (node: Node) => void): void {
             continue;
         const value = node[key];
         if (Array.isArray(value)) {
-            for (const child of value) walk(child, visitor);
+            for (const child of value) walk(child, visitor, node);
         } else {
-            walk(value, visitor);
+            walk(value, visitor, node);
         }
     }
 }

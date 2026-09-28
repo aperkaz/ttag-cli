@@ -3,6 +3,13 @@ const { jt: jsxTranslate } = require("ttag");
 
 translate`aliased ${user.name}`;
 get("function message");
+
+// parent declaration comment
+const multiline = translate`
+    first line
+    second line
+`;
+
 context("menu").t`context message`;
 context("menu").gettext("context function");
 ngettext(msgid`${count} item`, `${count} items`, `${count} many items`, count);
