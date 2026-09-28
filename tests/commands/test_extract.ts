@@ -50,6 +50,8 @@ test("extract base case", () => {
     execSync(`ts-node src/index.ts extract -o ${potPath} ${baseTestPath}`);
     const result = fs.readFileSync(potPath).toString();
     expect(result).toMatchSnapshot();
+    expect(result).toContain('msgid "test translation ${ name }"');
+    expect(result).toContain('msgid "test translation 2 ${ name }"');
 });
 
 test("extract from jsx", () => {

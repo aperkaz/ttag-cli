@@ -30,14 +30,24 @@ export async function extractAll(
     if (overrideOpts) {
         ttagOpts = mergeOpts(ttagOpts, overrideOpts);
     }
-    const getBabelOptions = (filename: string) =>
-        makeExtractBabelConf(
-            ttagOpts,
-            {
-                useProjectBabelrc: overrideOpts && overrideOpts.useProjectBabelrc
-            },
-            filename
-        );
+    const babelOptions = new Map<string, babel.TransformOptions>();
+    const getBabelOptions = (filename: string) => {
+        const extension = extname(filename);
+        const parserKind = extension === ".ts" ? "ts" : extension === ".tsx" ? "tsx" : "js";
+        let options = babelOptions.get(parserKind);
+        if (!options) {
+            options = makeExtractBabelConf(
+                ttagOpts,
+                {
+                    useProjectBabelrc:
+                        overrideOpts && overrideOpts.useProjectBabelrc
+                },
+                filename
+            );
+            babelOptions.set(parserKind, options);
+        }
+        return options;
+    };
     const transformFn: TransformFn = filepath => {
         try {
             switch (extname(filepath)) {
@@ -133,6 +143,17 @@ export async function extractAll(
         progress,
         decorateTransformFn(transformFn, rcOpts)
     );
+    babel.transformSync("", {
+        filename: "ttag-extraction-finalize.js",
+        ...makeExtractBabelConf(
+            ttagOpts,
+            {
+                useProjectBabelrc: overrideOpts && overrideOpts.useProjectBabelrc
+            },
+            "ttag-extraction-finalize.js",
+            true
+        )
+    });
     const result = fs.readFileSync(tmpFile.name).toString();
     tmpFile.removeCallback();
     return result;

@@ -133,34 +133,23 @@ function transformCompactTranslate(msgid: string): string {
     return replaceVariables(msgid, variableNumberMap);
 }
 
-function findDuplicatingMsgid(msgids: string[], transformedMsgid: string) {
-    return msgids.find(msgid => {
-        const variableNumberMap = getVariablesMap(msgid);
-
-        if (!variableNumberMap) {
-            return false;
-        }
-        return replaceVariables(msgid, variableNumberMap) === transformedMsgid;
-    });
-}
-
 export function checkDuplicateKeys(poData: PoData) {
     const ctxKeys = getObjectKeys(poData.translations);
     const errors = [];
     for (let i = 0; i < ctxKeys.length; i++) {
         const ctx = ctxKeys[i];
-        const transformedMsgids: Set<string> = new Set();
+        const transformedMsgids: Map<string, string> = new Map();
         const msgids = getObjectKeys(poData.translations[ctx]);
         for (let j = 0; j < msgids.length; j++) {
             const msgid = msgids[j];
             const newMsgid = transformCompactTranslate(msgid); // msgid where vars replaced by number t`test ${num1}`  => t`test ${0}`
-            if (transformedMsgids.has(newMsgid)) {
-                const duplicatedMsgid = findDuplicatingMsgid(msgids, newMsgid);
+            const duplicatedMsgid = transformedMsgids.get(newMsgid);
+            if (duplicatedMsgid) {
                 errors.push(
                     `Duplicate msgid ("${msgid}" and "${duplicatedMsgid}" in the same context will be interpreted as the same key "${newMsgid}") this potentially can lead to translation loss.`
                 );
             }
-            transformedMsgids.add(newMsgid);
+            transformedMsgids.set(newMsgid, duplicatedMsgid || msgid);
         }
     }
     if (errors.length > 0) {

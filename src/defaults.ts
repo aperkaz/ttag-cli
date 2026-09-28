@@ -40,7 +40,8 @@ export function makeBabelConf(ttagOpts: ttagTypes.TtagOpts, cliOpts: ttagTypes.C
 export function makeExtractBabelConf(
     ttagOpts: ttagTypes.TtagOpts,
     cliOpts: ttagTypes.CliOpts,
-    filename: string
+    filename: string,
+    finalize: boolean = false
 ): TransformOptions {
     const isTypeScript = /\.tsx?$/.test(filename);
     const parserPlugins: NonNullable<
@@ -58,9 +59,21 @@ export function makeExtractBabelConf(
         parserOpts: {
             plugins: parserPlugins
         },
-        plugins: [[babelTtagPlugin, ttagOpts]],
+        plugins: [[makeExtractionPlugin(finalize), ttagOpts]],
         ast: false,
         code: false,
         sourceMaps: false
+    };
+}
+
+function makeExtractionPlugin(finalize: boolean): any {
+    return function extractionPlugin() {
+        const pluginFactory =
+            (babelTtagPlugin as any).default || babelTtagPlugin;
+        const plugin = pluginFactory();
+        if (!finalize) {
+            delete plugin.post;
+        }
+        return plugin;
     };
 }

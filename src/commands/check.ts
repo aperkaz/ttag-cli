@@ -69,14 +69,21 @@ async function check(
     ttagRcOpts?: c3poTypes.TtagRc,
     skip?: "translation"
 ) {
-    const paths = resolvePaths(src, ignore);
+    const translations = parse(fs.readFileSync(pofile).toString());
+    const errMessage = checkDuplicateKeys(translations);
 
+    if (errMessage) {
+        const progress: c3poTypes.Progress = ora();
+        progress.fail(errMessage);
+        process.exit(1);
+    }
+
+    const paths = resolvePaths(src, ignore);
     const progress: c3poTypes.Progress = ora(
         `[ttag] checking translations from ${paths} ...`
     );
     // progress.start();
 
-    const translations = parse(fs.readFileSync(pofile).toString());
     const keysOnly = parse(
         await extractAll(paths, lang, progress, overrideOpts, ttagRcOpts)
     );
@@ -84,13 +91,6 @@ async function check(
     let untranslatedStream = getUntranslated(translations, keysOnly);
     untranslatedStream = warningPipe(pofile, progress, untranslatedStream);
     const untranslated = Array.from(untranslatedStream);
-
-    const errMessage = checkDuplicateKeys(translations);
-
-    if (errMessage) {
-        progress.fail(errMessage);
-        process.exit(1);
-    }
 
     if (untranslated.length && skip !== "translation") {
         progress.fail(
