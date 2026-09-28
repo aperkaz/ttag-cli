@@ -19,6 +19,7 @@ export async function extractWithBabel(
 ): Promise<string> {
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "ttag-"));
     const tmpFile = path.join(tmpDir, "translations.pot");
+    fs.writeFileSync(tmpFile, "");
     ttagOpts.extract = { ...ttagOpts.extract, output: tmpFile };
     const babelOptions = new Map<string, babel.TransformOptions>();
     const getBabelOptions = (filename: string) => {

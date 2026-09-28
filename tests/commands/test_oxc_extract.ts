@@ -32,3 +32,27 @@ test("Oxc extraction matches Babel PO data", () => {
     oxcFile.removeCallback();
     babelFile.removeCallback();
 });
+
+test("Babel fallback handles files without translations", () => {
+    const output = tempFile();
+    execFileSync(
+        "ts-node",
+        [
+            "src/index.ts",
+            "extract",
+            "-o",
+            output.name,
+            path.resolve(__dirname, "../fixtures/baseTest/test.xml")
+        ],
+        { env: { ...process.env, TTAG_EXTRACTOR: "babel" } }
+    );
+    expect(parse(fs.readFileSync(output.name, "utf8")).translations).toEqual({
+        "": {
+            "": {
+                msgid: "",
+                msgstr: ["Content-Type: text/plain\n"]
+            }
+        }
+    });
+    output.removeCallback();
+});
